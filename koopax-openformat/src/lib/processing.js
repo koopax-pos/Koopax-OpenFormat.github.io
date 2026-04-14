@@ -9,8 +9,6 @@ export function validate(ini, docs) {
   if (!ini?.vat) w.push({ t: "error", m: "חסר מספר עוסק מורשה" });
   if (!ini?.biz) w.push({ t: "warn", m: "חסר שם עסק" });
   if (!docs.length) w.push({ t: "warn", m: "לא נמצאו מסמכים" });
-  const cx = docs.filter((d) => d.h.xx).length;
-  if (cx) w.push({ t: "info", m: `${cx} מסמכים מבוטלים` });
   const nc = docs.filter((d) => !d.h.cn || d.h.cn === "[חסר שם לקוח]").length;
   if (nc) w.push({ t: "warn", m: `${nc} מסמכים ללא שם לקוח` });
   const zr = docs.filter((d) => d.h.to === 0 && d.h.dt >= 300 && d.h.dt <= 330).length;
@@ -26,7 +24,7 @@ export function processAsync(iB, bB, onP) {
       onP({ s: "מפענח קידוד...", p: 5 });
       const iDec = decodeAuto(iB);
       const bDec = decodeAuto(bB);
-      onP({ s: "מפצל שורות...", p: 10 });
+      onP({ s: `קידוד: INI=${iDec.enc} · BKMVDATA=${bDec.enc}`, p: 10 });
       const iL = iDec.text.split(/\r?\n/).filter((l) => l.length > 3);
       const bL = bDec.text.split(/\r?\n/).filter((l) => l.length > 3);
       const ini = iL.length ? parseIni(iL[0]) : null;
@@ -80,12 +78,11 @@ export function processAsync(iB, bB, onP) {
             }
           });
           const per = {
-            s: ini?.sDate || (mn ? toY(mn) : ""),
-            e: ini?.eDate || (mx ? toY(mx) : ""),
+            s: (ini?.sDate?.length >= 8 ? ini.sDate : null) || (mn ? toY(mn) : ""),
+            e: (ini?.eDate?.length >= 8 ? ini.eDate : null) || (mx ? toY(mx) : ""),
             y: ini?.taxYr || "",
           };
           const wrn = validate(ini, docs);
-          wrn.push({ t: "info", m: `קידוד: ${iDec.enc} (INI), ${bDec.enc} (DATA)` });
 
           const itemMap = {};
           docs.forEach((d) => {
@@ -106,7 +103,8 @@ export function processAsync(iB, bB, onP) {
             (a.name || "").localeCompare(b.name || "", "he"),
           );
           onP({ s: "סיום!", p: 100 });
-          setTimeout(() => res({ ini, docs, accs: bs, inv: ms, per, wrn, items }), 100);
+          const enc = { ini: iDec.enc, bkmv: bDec.enc };
+          setTimeout(() => res({ ini, docs, accs: bs, inv: ms, per, wrn, items, enc }), 100);
         }, 0);
       }
       setTimeout(chunk, 0);

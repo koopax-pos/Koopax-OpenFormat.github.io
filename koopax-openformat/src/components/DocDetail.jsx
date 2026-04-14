@@ -1,24 +1,26 @@
 import React from "react";
 import { DT, PM, K } from "../lib/constants";
 import { fa, fd, ft } from "../lib/formatters";
+import { shareDoc } from "../lib/whatsapp";
 import { Badge } from "./Badge";
+import { WhatsAppBtn } from "./WhatsAppShare";
 
-export function DocDetail({ doc }) {
+export function DocDetail({ doc, ini, mob }) {
   const { h, ds, ps } = doc;
   const tn = DT[h.dt] || h.dt;
 
   return (
     <div style={{ background: K.cd, border: `1px solid ${K.bd}`, borderRadius: 12, overflow: "hidden" }}>
       {/* Header */}
-      <div style={{ background: K.hd, color: "#fff", padding: "16px 20px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
+      <div style={{ background: K.hd, color: "#fff", padding: mob ? "12px 14px" : "16px 20px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 4 }}>
           <div>
             <div style={{ fontSize: 11, opacity: 0.7 }}>{tn} #{h.dn?.replace(/^0+/, "") || "—"}</div>
-            <div style={{ fontSize: 21, fontWeight: 700 }}>{fa(h.to)}</div>
+            <div style={{ fontSize: mob ? 18 : 21, fontWeight: 700 }}>{fa(h.to)}</div>
           </div>
-          <div style={{ textAlign: "left", fontSize: 13, opacity: 0.85 }}>
+          <div style={{ textAlign: "left", fontSize: mob ? 12 : 13, opacity: 0.85 }}>
             <div>{fd(h.dD || h.iD)}</div>
-            {h.iT && <div style={{ fontSize: 12 }}>{ft(h.iT)}</div>}
+            {h.iT && <div style={{ fontSize: mob ? 11 : 12 }}>{ft(h.iT)}</div>}
           </div>
         </div>
         {h.xx && (
@@ -29,9 +31,9 @@ export function DocDetail({ doc }) {
       </div>
 
       {/* Customer info */}
-      <div style={{ padding: "12px 20px", borderBottom: `1px solid ${K.tb}`, background: K.st }}>
+      <div style={{ padding: mob ? "10px 14px" : "12px 20px", borderBottom: `1px solid ${K.tb}`, background: K.st }}>
         <div style={{ fontSize: 11, color: K.t2 }}>לקוח/ספק</div>
-        <div style={{ fontWeight: 600 }}>{h.cn || "—"}</div>
+        <div style={{ fontWeight: 600, wordBreak: "break-word" }}>{h.cn || "—"}</div>
         {(h.ca || h.cc) && (
           <div style={{ fontSize: 12, color: K.t2 }}>
             {[h.ca, h.can, h.cc].filter(Boolean).join(" ")}
@@ -45,7 +47,7 @@ export function DocDetail({ doc }) {
 
       {/* Totals */}
       <div style={{
-        padding: "12px 20px", borderBottom: `1px solid ${K.tb}`,
+        padding: mob ? "10px 14px" : "12px 20px", borderBottom: `1px solid ${K.tb}`,
         display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8,
       }}>
         <div>
@@ -64,7 +66,7 @@ export function DocDetail({ doc }) {
 
       {/* Items */}
       {ds.length > 0 && (
-        <div style={{ padding: "12px 20px", borderBottom: `1px solid ${K.tb}` }}>
+        <div style={{ padding: mob ? "10px 14px" : "12px 20px", borderBottom: `1px solid ${K.tb}` }}>
           <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6, color: K.t2 }}>
             פריטים ({ds.length})
           </div>
@@ -107,7 +109,7 @@ export function DocDetail({ doc }) {
 
       {/* Payments */}
       {ps.length > 0 && (
-        <div style={{ padding: "12px 20px" }}>
+        <div style={{ padding: mob ? "10px 14px" : "12px 20px" }}>
           <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6, color: K.t2 }}>
             תשלומים ({ps.length})
           </div>
@@ -135,12 +137,15 @@ export function DocDetail({ doc }) {
 
       {/* Footer */}
       <div style={{
-        padding: "8px 20px", background: K.st, borderTop: `1px solid ${K.tb}`,
-        fontSize: 10, color: K.t3, display: "flex", gap: 12, flexWrap: "wrap",
+        padding: mob ? "8px 14px" : "8px 20px", background: K.st, borderTop: `1px solid ${K.tb}`,
+        fontSize: 10, color: K.t3, display: "flex", gap: mob ? 8 : 12, flexWrap: "wrap", alignItems: "center",
       }}>
         {h.op && <span>מפעיל: {h.op}</span>}
         {h.br && <span>סניף: {h.br}</span>}
         <span>מזהה: {h.mf || h.lk || "—"}</span>
+        <span style={{ marginRight: "auto" }}>
+          <WhatsAppBtn text={shareDoc(doc, ini)} label="שתף עסקה" size="tiny" />
+        </span>
       </div>
     </div>
   );
