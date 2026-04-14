@@ -1,20 +1,41 @@
-import React, { useState, useCallback, useMemo, useEffect } from "react";
+import React, { lazy, Suspense, useState, useCallback, useMemo, useEffect } from "react";
 import { DT, K } from "./lib/constants";
 import { fa, fd } from "./lib/formatters";
 import { processAsync } from "./lib/processing";
-import { expXls, expItems, expDoc } from "./lib/exports";
 import { Badge } from "./components/Badge";
 import { StatCard } from "./components/StatCard";
 import { DocDetail } from "./components/DocDetail";
-import { ZReport } from "./components/ZReport";
 import { WhatsAppBtn } from "./components/WhatsAppShare";
 import { shareDocQuick, shareStats, shareYearly, shareAccounts, shareInventory } from "./lib/whatsapp";
-import Documentation from "./components/Documentation";
 
 /* ═══ Koopax OpenFormat — נבנה על ידי קופקס ═══ */
 
 const LOGO = "https://online.koopax.co.il/logo.png";
 const PS = 60;
+const ZReport = lazy(() =>
+  import("./components/ZReport").then((module) => ({ default: module.ZReport })),
+);
+const Documentation = lazy(() => import("./components/Documentation"));
+
+function LazyScreenFallback({ text, style }) {
+  return (
+    <div
+      style={{
+        ...style,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        minHeight: 240,
+        padding: 24,
+        textAlign: "center",
+        color: K.t2,
+        fontSize: 14,
+      }}
+    >
+      {text}
+    </div>
+  );
+}
 
 export default function App() {
   const [data, setData] = useState(null);
@@ -55,11 +76,18 @@ export default function App() {
     setExporting(label);
     requestAnimationFrame(() => {
       setTimeout(() => {
-        try { fn(); } catch (e) { alert("שגיאה בייצוא: " + e.message); }
-        setExporting(null);
+        Promise.resolve(fn())
+          .catch((e) => {
+            alert("שגיאה בייצוא: " + e.message);
+          })
+          .finally(() => {
+            setExporting(null);
+          });
       }, 100);
     });
   }, []);
+
+  const loadExports = useCallback(async () => import("./lib/exports"), []);
 
   const dts = useMemo(() => {
     if (!data) return [];
@@ -135,7 +163,13 @@ export default function App() {
     background: K.bg, minHeight: "100vh", color: K.tx, lineHeight: 1.6,
   };
 
-  if (showDocs) return <Documentation onBack={() => setShowDocs(false)} />;
+  if (showDocs) {
+    return (
+      <Suspense fallback={<LazyScreenFallback text="טוען מדריך..." style={rs} />}>
+        <Documentation onBack={() => setShowDocs(false)} />
+      </Suspense>
+    );
+  }
 
   // ─── Upload screen ───
   if (!data) return (
@@ -272,9 +306,9 @@ export default function App() {
           </div>
           <div style={{ display: "flex", gap: 4, flexWrap: "wrap", justifyContent: mob ? "center" : "flex-end" }}>
             {[
-              ["ייצוא Excel", () => doExport("מייצא לאקסל...", () => expXls(data))],
-              ["ייצוא Word", () => doExport("מייצא לוורד...", () => expDoc(data))],
-              ["ייצוא קטלוג פריטים", () => doExport("מייצא קטלוג פריטים...", () => expItems(data))],
+              ["ייצוא Excel", () => doExport("מייצא לאקסל...", async () => (await loadExports()).expXls(data))],
+              ["ייצוא Word", () => doExport("מייצא לוורד...", async () => (await loadExports()).expDoc(data))],
+              ["ייצוא קטלוג פריטים", () => doExport("מייצא קטלוג פריטים...", async () => (await loadExports()).expItems(data))],
               ["\uD83C\uDFE0 העלה קובץ חדש", () => { setData(null); setIF(null); setBF(null); }],
               ["📖 מדריך", () => setShowDocs(true)],
               ["ℹ️ אודות", () => setShowAbout(true)],
@@ -391,7 +425,9 @@ export default function App() {
 
         {/* Z Report */}
         {tab === "zreport" && (
-          <ZReport docs={data.docs} ini={ini} />
+          <Suspense fallback={<LazyScreenFallback text="טוען דוח Z..." />}>
+            <ZReport docs={data.docs} ini={ini} />
+          </Suspense>
         )}
 
         {/* Yearly */}

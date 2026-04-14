@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import html2canvas from "html2canvas";
 import { K } from "../lib/constants";
 
 const WA_GREEN = "#25D366";
@@ -54,6 +53,7 @@ export function WhatsAppImageBtn({ targetRef, fileName, label, style: extraStyle
     if (!targetRef?.current || busy) return;
     setBusy(true);
     try {
+      const { default: html2canvas } = await import("html2canvas");
       const el = targetRef.current;
       const btns = el.querySelectorAll("[data-hide-capture]");
       btns.forEach((b) => (b.style.display = "none"));

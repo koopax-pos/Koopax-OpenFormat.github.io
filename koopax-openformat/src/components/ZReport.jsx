@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useRef } from "react";
-import * as XLSX from "xlsx";
 import { DT, PM, K } from "../lib/constants";
 import { fa, fd } from "../lib/formatters";
 import { WhatsAppImageBtn } from "./WhatsAppShare";
@@ -163,7 +162,8 @@ function computeZData(filtered, allDocs, ini) {
   };
 }
 
-function exportZToExcel(zData, filtered, ini, periodType, periodLabel) {
+async function exportZToExcel(zData, filtered, ini, periodType, periodLabel) {
+  const XLSX = await import("xlsx");
   const wb = XLSX.utils.book_new();
 
   const bizRows = [
@@ -532,9 +532,9 @@ export function ZReport({ docs, ini }) {
         )}
         {zData && (
           <button
-            onClick={() =>
-              exportZToExcel(zData, filtered, ini, periodType, periodLabel)
-            }
+            onClick={() => {
+              void exportZToExcel(zData, filtered, ini, periodType, periodLabel);
+            }}
             style={{
               padding: "6px 14px",
               borderRadius: 7,
